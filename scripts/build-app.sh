@@ -8,9 +8,10 @@ BIN="$(swift build -c release --show-bin-path)/LocatorBar"
 APP="build/Locator.app"
 
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/LocatorBar"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+cp Resources/cqzones.json Resources/ituzones.json Resources/zones-LICENSE.txt "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"   # ad-hoc signature, fine for running on your own Macs
 echo "Built $APP"
 

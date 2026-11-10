@@ -24,7 +24,13 @@ struct MenuContent: View {
             let lat = loc.coordinate.latitude, lon = loc.coordinate.longitude
             Text(Maidenhead.locator(latitude: lat, longitude: lon, pairs: 4))
             Text(String(format: "%.5f, %.5f", lat, lon))
-            Text("±\(Int(loc.horizontalAccuracy)) m · \(loc.timestamp.formatted(date: .omitted, time: .shortened))")
+            Text("±\(Int(loc.horizontalAccuracy)) m")
+            Divider()
+            Text("CQ Zone: \(location.cqZone.map(String.init) ?? "–")")
+            Text("ITU Zone: \(location.ituZone.map(String.init) ?? "–")")
+            if let wab = location.wab {
+                Text("WAB Square: \(wab)")
+            }
             Divider()
             Button("Copy Locator") { copy(location.locator ?? "") }
                 .keyboardShortcut("c")
@@ -51,7 +57,17 @@ struct MenuContent: View {
 }
 
 final class LocationModel: NSObject, ObservableObject, CLLocationManagerDelegate {
-    @Published var current: CLLocation?
+    @Published var current: CLLocation? {
+        didSet {
+            guard let c = current?.coordinate else { return }
+            cqZone = Zones.cqZone(latitude: c.latitude, longitude: c.longitude)
+            ituZone = Zones.ituZone(latitude: c.latitude, longitude: c.longitude)
+            wab = WAB.square(latitude: c.latitude, longitude: c.longitude)
+        }
+    }
+    @Published var cqZone: Int?
+    @Published var ituZone: Int?
+    @Published var wab: String?
     @Published var status = "Locating…"
     @Published var denied = false
 
