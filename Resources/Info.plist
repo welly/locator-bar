@@ -3,6 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleExecutable</key><string>LocatorBar</string>
+	<key>CFBundleIconFile</key><string>AppIcon</string>
 	<key>CFBundleIdentifier</key><string>pub.moore.LocatorBar</string>
 	<key>CFBundleName</key><string>Locator</string>
 	<key>CFBundleDisplayName</key><string>Locator</string>

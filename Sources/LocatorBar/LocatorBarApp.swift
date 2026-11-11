@@ -25,20 +25,20 @@ struct MenuContent: View {
     var body: some View {
         if let loc = location.current {
             let lat = loc.coordinate.latitude, lon = loc.coordinate.longitude
-            Text(Maidenhead.locator(latitude: lat, longitude: lon, pairs: 4))
-            Text(String(format: "%.5f, %.5f", lat, lon))
+            let locator8 = Maidenhead.locator(latitude: lat, longitude: lon, pairs: 4)
+            let coords = String(format: "%.5f, %.5f", lat, lon)
+            // Clicking a row copies its value to the clipboard.
+            Button(locator8) { copy(locator8) }
+                .keyboardShortcut("c")
+            Button(coords) { copy(coords) }
             Text("±\(Int(loc.horizontalAccuracy)) m")
             Text("Fix: \(Self.utc.string(from: loc.timestamp))")
             Divider()
-            Text("CQ Zone: \(location.cqZone.map(String.init) ?? "–")")
-            Text("ITU Zone: \(location.ituZone.map(String.init) ?? "–")")
+            copyRow("CQ Zone", location.cqZone.map(String.init))
+            copyRow("ITU Zone", location.ituZone.map(String.init))
             if let wab = location.wab {
-                Text("WAB Square: \(wab)")
+                copyRow("WAB Square", wab)
             }
-            Divider()
-            Button("Copy Locator") { copy(location.locator ?? "") }
-                .keyboardShortcut("c")
-            Button("Copy Coordinates") { copy(String(format: "%.5f, %.5f", lat, lon)) }
         } else {
             Text(location.status)
         }
@@ -79,6 +79,16 @@ struct MenuContent: View {
         f.dateFormat = "yyyy-MM-dd HHmm'Z'"
         return f
     }()
+
+    /// A "Label: value" row that copies the value when clicked, or plain text when there's no value.
+    @ViewBuilder
+    private func copyRow(_ label: String, _ value: String?) -> some View {
+        if let value {
+            Button("\(label): \(value)") { copy(value) }
+        } else {
+            Text("\(label): –")
+        }
+    }
 
     private func copy(_ s: String) {
         NSPasteboard.general.clearContents()

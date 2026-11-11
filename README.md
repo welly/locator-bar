@@ -7,7 +7,7 @@ Maidenhead locator (e.g. `IO91wm`). Clicking it shows:
 - CQ zone and ITU zone
 - WAB (Worked All Britain) square: OS grid in Great Britain and the Isle of Man,
   Irish Grid in Ireland, UTM-based WA/WV squares in the Channel Islands
-- Copy Locator / Copy Coordinates
+- Click the locator, coordinates, a zone or the WAB square to copy it
 - Launch at Login (works once the app is installed, e.g. in `~/Applications`)
 - About Locator
 
