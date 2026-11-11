@@ -1,14 +1,16 @@
 import AppKit
 import CoreLocation
+import ServiceManagement
 import SwiftUI
 
 @main
 struct LocatorBarApp: App {
     @StateObject private var location = LocationModel()
+    @StateObject private var loginItem = LaunchAtLogin()
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContent(location: location)
+            MenuContent(location: location, loginItem: loginItem)
         } label: {
             Text(location.locator ?? "––––––")
                 .monospacedDigit()
@@ -18,6 +20,7 @@ struct LocatorBarApp: App {
 
 struct MenuContent: View {
     @ObservedObject var location: LocationModel
+    @ObservedObject var loginItem: LaunchAtLogin
 
     var body: some View {
         if let loc = location.current {
@@ -25,6 +28,7 @@ struct MenuContent: View {
             Text(Maidenhead.locator(latitude: lat, longitude: lon, pairs: 4))
             Text(String(format: "%.5f, %.5f", lat, lon))
             Text("±\(Int(loc.horizontalAccuracy)) m")
+            Text("Fix: \(Self.utc.string(from: loc.timestamp))")
             Divider()
             Text("CQ Zone: \(location.cqZone.map(String.init) ?? "–")")
             Text("ITU Zone: \(location.ituZone.map(String.init) ?? "–")")
@@ -41,18 +45,69 @@ struct MenuContent: View {
         Divider()
         Button("Refresh") { location.refresh() }
             .keyboardShortcut("r")
+        Toggle("Launch at Login", isOn: Binding(
+            get: { loginItem.isEnabled },
+            set: { loginItem.setEnabled($0) }
+        ))
+        .onAppear { loginItem.reload() }
+        if loginItem.needsApproval {
+            Button("Allow in Login Items Settings…") { SMAppService.openSystemSettingsLoginItems() }
+        }
         if location.denied {
             Button("Open Location Settings…") {
                 NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices")!)
             }
         }
+        Button("About Locator") {
+            NSApp.activate(ignoringOtherApps: true)
+            NSApp.orderFrontStandardAboutPanel(options: [
+                .credits: NSAttributedString(
+                    string: "CQ and ITU zone boundaries from HB9HIL/hamradio-zones-geojson (MIT licence).\nYour position never leaves this Mac.",
+                    attributes: [.font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)]
+                )
+            ])
+        }
         Button("Quit") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 
+    /// Operator-facing UTC time, e.g. `2026-11-10 2003Z`.
+    private static let utc: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyy-MM-dd HHmm'Z'"
+        return f
+    }()
+
     private func copy(_ s: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(s, forType: .string)
+    }
+}
+
+/// Registers the app as a login item via ServiceManagement. Only works from a built `.app` bundle.
+final class LaunchAtLogin: ObservableObject {
+    @Published private(set) var isEnabled = false
+    @Published private(set) var needsApproval = false
+
+    init() { reload() }
+
+    func reload() {
+        let status = SMAppService.mainApp.status
+        isEnabled = status == .enabled
+        needsApproval = status == .requiresApproval
+    }
+
+    func setEnabled(_ on: Bool) {
+        do {
+            if on { try SMAppService.mainApp.register() }
+            else { try SMAppService.mainApp.unregister() }
+        } catch {
+            NSLog("Launch at login: \(error.localizedDescription)")
+        }
+        reload()
+        if on && needsApproval { SMAppService.openSystemSettingsLoginItems() }
     }
 }
 

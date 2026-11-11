@@ -3,11 +3,13 @@
 A tiny macOS menu bar utility for amateur radio. The menu bar shows your current
 Maidenhead locator (e.g. `IO91wm`). Clicking it shows:
 
-- 8-character locator, coordinates and fix accuracy
+- 8-character locator, coordinates, fix accuracy and fix time (UTC)
 - CQ zone and ITU zone
 - WAB (Worked All Britain) square: OS grid in Great Britain and the Isle of Man,
   Irish Grid in Ireland, UTM-based WA/WV squares in the Channel Islands
 - Copy Locator / Copy Coordinates
+- Launch at Login (works once the app is installed, e.g. in `~/Applications`)
+- About Locator
 
 Everything is worked out on the Mac; your position is not sent anywhere.
 
